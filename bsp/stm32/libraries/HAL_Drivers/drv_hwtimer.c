@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2018, RT-Thread Development Team
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -8,6 +8,7 @@
  * 2018-12-10     zylx         first version
  * 2020-06-16     thread-liu   Porting for stm32mp1
  * 2020-08-25     linyongkang  Fix the timer clock frequency doubling problem
+ * 2020-10-14     Dozingfiretruck   Porting for stm32wbxx
  */
 
 #include <board.h>
@@ -174,10 +175,10 @@ static void pclkx_doubler_get(rt_uint32_t *pclk1_doubler, rt_uint32_t *pclk2_dou
     }
     if (RCC_ClkInitStruct.APB2_Div != RCC_APB2_DIV1)
     {
-       *pclk2_doubler = 2; 
+       *pclk2_doubler = 2;
     }
 #else
-    if (RCC_ClkInitStruct.APB1CLKDivider != RCC_HCLK_DIV1)    
+    if (RCC_ClkInitStruct.APB1CLKDivider != RCC_HCLK_DIV1)
     {
          *pclk1_doubler = 2;
     }
@@ -210,6 +211,8 @@ static void timer_init(struct rt_hwtimer_device *timer, rt_uint32_t state)
         if (tim->Instance == TIM9 || tim->Instance == TIM10 || tim->Instance == TIM11)
 #elif defined(SOC_SERIES_STM32L4)
         if (tim->Instance == TIM15 || tim->Instance == TIM16 || tim->Instance == TIM17)
+#elif defined(SOC_SERIES_STM32WB)
+        if (tim->Instance == TIM16 || tim->Instance == TIM17)
 #elif defined(SOC_SERIES_STM32MP1)
        if(tim->Instance == TIM14 || tim->Instance == TIM16 || tim->Instance == TIM17)
 #elif defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32G0)
@@ -236,7 +239,7 @@ static void timer_init(struct rt_hwtimer_device *timer, rt_uint32_t state)
             tim->Init.CounterMode   = TIM_COUNTERMODE_DOWN;
         }
         tim->Init.RepetitionCounter = 0;
-#if defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32MP1)
+#if defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32MP1) || defined(SOC_SERIES_STM32WB)
         tim->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 #endif
         if (HAL_TIM_Base_Init(tim) != HAL_OK)
@@ -285,7 +288,7 @@ static rt_err_t timer_start(rt_hwtimer_t *timer, rt_uint32_t t, rt_hwtimer_mode_
     {
         tim->Instance->CR1 &= (~TIM_OPMODE_SINGLE);
     }
-	
+
     /* start timer */
     if (HAL_TIM_Base_Start_IT(tim) != HAL_OK)
     {
@@ -338,8 +341,10 @@ static rt_err_t timer_ctrl(rt_hwtimer_t *timer, rt_uint32_t cmd, void *arg)
         if (tim->Instance == TIM9 || tim->Instance == TIM10 || tim->Instance == TIM11)
 #elif defined(SOC_SERIES_STM32L4)
         if (tim->Instance == TIM15 || tim->Instance == TIM16 || tim->Instance == TIM17)
+#elif defined(SOC_SERIES_STM32WB)
+        if (tim->Instance == TIM16 || tim->Instance == TIM17)
 #elif defined(SOC_SERIES_STM32MP1)
-       if(tim->Instance == TIM14 || tim->Instance == TIM16 || tim->Instance == TIM17)  
+       if(tim->Instance == TIM14 || tim->Instance == TIM16 || tim->Instance == TIM17)
 #elif defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32G0)
         if (0)
 #endif
@@ -453,7 +458,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 #ifdef BSP_USING_TIM14
 #if defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7)
     void TIM8_TRG_COM_TIM14_IRQHandler(void)
-#elif defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32MP1) 
+#elif defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32MP1)
     void TIM14_IRQHandler(void)
 #endif
 {
@@ -475,9 +480,9 @@ void TIM1_BRK_TIM15_IRQHandler(void)
 }
 #endif
 #ifdef BSP_USING_TIM16
-#if defined(SOC_SERIES_STM32L4)
+#if defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB)
     void TIM1_UP_TIM16_IRQHandler(void)
-#elif defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32MP1) 
+#elif defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32MP1)
     void TIM16_IRQHandler(void)
 #endif
 {
@@ -489,9 +494,9 @@ void TIM1_BRK_TIM15_IRQHandler(void)
 }
 #endif
 #ifdef BSP_USING_TIM17
-#if defined(SOC_SERIES_STM32L4)
+#if defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB)
     void TIM1_TRG_COM_TIM17_IRQHandler(void)
-#elif defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32MP1) 
+#elif defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32MP1)
     void TIM17_IRQHandler(void)
 #endif
 {
